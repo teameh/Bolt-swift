@@ -104,7 +104,7 @@ public struct Response {
             pos += 2
             let size = Int(try UInt16.unpack(sizeBytes))
 
-            if pos+size >= bytes.count {
+            if (pos+size >= bytes.endIndex) || (size == 0) {
                 hasMoreChunks = false
             } else {
 
