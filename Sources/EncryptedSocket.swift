@@ -10,7 +10,7 @@ public class EncryptedSocket {
     let socket: Socket
     let configuration: SSLService.Configuration
 
-    fileprivate static let readBufferSize = 65536
+    fileprivate static let readBufferSize = 8192
 
     public init(hostname: String, port: Int, configuration: SSLService.Configuration) throws {
         self.hostname = hostname
@@ -82,7 +82,7 @@ extension EncryptedSocket: SocketProtocol {
 
         var bytes = [Byte] (data)
         
-        while numberOfBytes != 0 && numberOfBytes % 8192 == 0 {
+        while numberOfBytes != 0 && numberOfBytes % EncryptedSocket.readBufferSize == 0 {
             usleep(10000)
             data = Data(capacity: EncryptedSocket.readBufferSize)
             numberOfBytes = try socket.read(into: &data)

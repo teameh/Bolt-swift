@@ -8,7 +8,7 @@ public class UnencryptedSocket {
     let port: Int
     let socket: Socket
 
-    fileprivate static let readBufferSize = 32768
+    fileprivate static let readBufferSize = 8192
 
     public init(hostname: String, port: Int) throws {
         self.hostname = hostname
@@ -43,7 +43,7 @@ extension UnencryptedSocket: SocketProtocol {
         
         var bytes = [Byte] (data)
         
-        while numberOfBytes != 0 && numberOfBytes % 8192 == 0 {
+        while numberOfBytes != 0 && numberOfBytes % UnencryptedSocket.readBufferSize == 0 {
             usleep(10000)
             data = Data(capacity: UnencryptedSocket.readBufferSize)
             numberOfBytes = try socket.read(into: &data)
