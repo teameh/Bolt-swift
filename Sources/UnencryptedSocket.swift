@@ -21,9 +21,14 @@ public class UnencryptedSocket {
         self.port = port
     }
     
-}
-
-extension UnencryptedSocket: SocketProtocol {
+    func setupBootstrap(_ group: MultiThreadedEventLoopGroup, _ dataHandler: ReadDataHandler) -> (ClientBootstrap) {
+        return ClientBootstrap(group: group)
+            // Enable SO_REUSEADDR.
+            .channelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
+            .channelInitializer { channel in
+                channel.pipeline.add(handler: dataHandler)
+        }
+    }
     
     public func connect(timeout: Int) throws {
         
@@ -54,16 +59,15 @@ extension UnencryptedSocket: SocketProtocol {
         
         let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
         self.group = group
-        let bootstrap = ClientBootstrap(group: group)
-            // Enable SO_REUSEADDR.
-            .channelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
-            .channelInitializer { channel in
-                channel.pipeline.add(handler: dataHandler)
-        }
+        let bootstrap = setupBootstrap(group, dataHandler)
         self.bootstrap = bootstrap
         let channel = try bootstrap.connect(host: hostname, port: port).wait()
         self.channel = channel
     }
+}
+
+extension UnencryptedSocket: SocketProtocol {
+    
     
     public func disconnect() {
         try? channel?.close(mode: .all).wait()
