@@ -1,94 +1,118 @@
 import Foundation
 import PackStream
-import Socket
-import SSLService
+import NIOOpenSSL
+import NIO
 
 public class EncryptedSocket {
 
     let hostname: String
     let port: Int
-    let socket: Socket
-    let configuration: SSLService.Configuration
+    
+    var group: EventLoopGroup?
+    var bootstrap: ClientBootstrap?
+    var channel: Channel?
+    
+    var readGroup: DispatchGroup?
+    var receivedBuffers: [ByteBuffer] = []
 
     fileprivate static let readBufferSize = 8192
 
-    public init(hostname: String, port: Int, configuration: SSLService.Configuration) throws {
+    public init(hostname: String, port: Int) throws {
         self.hostname = hostname
         self.port = port
-        self.configuration = configuration
-
-        self.socket = try Socket.create(family: .inet, type: .stream, proto: .tcp)
-        self.socket.readBufferSize = EncryptedSocket.readBufferSize
     }
 
-    public static func defaultConfiguration(sslConfig: SSLConfiguration, allowHostToBeSelfSigned: Bool) -> SSLService.Configuration {
-
-        let configuration = SSLService.Configuration(withCipherSuite: nil)
-        return configuration
-    }
 }
 
 extension EncryptedSocket: SocketProtocol {
-
+    
     public func connect(timeout: Int) throws {
-        if let sslService = try SSLService(usingConfiguration: self.configuration) {
-            sslService.skipVerification = true
-            socket.delegate = sslService
+        let configuration = TLSConfiguration.forClient(certificateVerification: .none) // allow self signed
+        let sslContext = try SSLContext(configuration: configuration)
+        let handler = try OpenSSLClientHandler(context: sslContext)
+        
+        let dataHandler = ReadDataHandler()
+        let leave = debounce(interval: 20, queue: DispatchQueue.global(qos: .background)) { [weak self] (identifier: String) in
+            self?.readGroup?.leave()
+        }
+        
+        dataHandler.dataReceivedBlock = { data in
+            self.receivedBuffers.append(data)
 
-            sslService.verifyCallback = { _ in
-
-                return (true, nil)
+            if data.readableBytes < EncryptedSocket.readBufferSize/2 {
+                leave("leave")
+            } else {
+                
+                let start = data.readableBytes - 2
+                if  let terminator = data.getBytes(at: start, length: 2) {
+                    if terminator[0] == 0 && terminator[1] == 0 {
+                        leave("leave")
+                    } else {
+                        // more data will follow
+                    }
+                } else {
+                    leave("leave")
+                }
             }
         }
-
-        if socket.isConnected == false {
-            usleep(10000) // This sleep is anoying, but else SSL may not complete correctly!
-            let timeout = UInt(max(0, timeout))
-            try socket.connect(to: hostname, port: Int32(port), timeout: timeout)
-        } else {
-            print("Socket was already connected")
+        
+        let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
+        self.group = group
+        let bootstrap = ClientBootstrap(group: group)
+            // Enable SO_REUSEADDR.
+            .channelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
+            .channelInitializer { channel in
+                channel.pipeline.add(handler: handler).then { v in
+                    channel.pipeline.add(handler: dataHandler)
+                }
         }
+        self.bootstrap = bootstrap
+        let channel = try bootstrap.connect(host: hostname, port: port).wait()
+        self.channel = channel
     }
 
     public func disconnect() {
-        socket.close()
-    }
-
-    private func checkAndPossiblyReconnectSocket () throws {
-
-        let (readables, writables) = try Socket.checkStatus(for: [socket])
-        if socket.isConnected == false || readables.count + writables.count < 1 {
-            print("Reconnecting")
-            // reconnect
-            disconnect()
-            try connect(timeout: 5)
-        }
-
+        try? channel?.close(mode: .all).wait()
+        try? group?.syncShutdownGracefully()
     }
 
     public func send(bytes: [Byte]) throws {
-
-        try checkAndPossiblyReconnectSocket()
-
-        let data = Data(bytes: bytes)
-        try socket.write(from: data)
+        
+        guard let channel = channel else { return }
+        
+        var buffer = channel.allocator.buffer(capacity: bytes.count)
+        buffer.write(bytes: bytes)
+        _ = channel.writeAndFlush(buffer)
     }
 
     public func receive(expectedNumberOfBytes: Int32) throws -> [Byte] {
-        try checkAndPossiblyReconnectSocket()
-
-        var data = Data(capacity: EncryptedSocket.readBufferSize)
-        var numberOfBytes = try socket.read(into: &data)
-
-        var bytes = [Byte] (data)
         
-        while numberOfBytes != 0 && numberOfBytes % EncryptedSocket.readBufferSize == 0 {
-            usleep(10000)
-            data = Data(capacity: EncryptedSocket.readBufferSize)
-            numberOfBytes = try socket.read(into: &data)
-            bytes.append(contentsOf: data)
+        if self.readGroup != nil {
+            print("Error: already reading")
+            return []
         }
+        self.readGroup = DispatchGroup()
+        self.readGroup?.enter()
         
-        return bytes
+        self.channel?.read()
+        self.readGroup?.wait()
+        self.readGroup = nil
+        //sleep(5)
+
+        let receivedBuffers = self.receivedBuffers
+        self.receivedBuffers = []
+        let bytes = receivedBuffers.map { buf -> [UInt8] in
+            let empty: [UInt8] = []
+            var buf = buf
+            let num = buf.readableBytes
+            let bytes: [UInt8]? = buf.readBytes(length: num)
+            if let bytes = bytes {
+                return bytes as [UInt8]
+            } else {
+                return empty as [UInt8]
+            }
+        }
+
+        return Array<UInt8>(bytes.joined())
     }
 }

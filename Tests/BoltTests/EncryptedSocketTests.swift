@@ -1,6 +1,5 @@
 import Foundation
 import XCTest
-import SSLService
 import PackStream
 
 @testable import Bolt
@@ -17,8 +16,7 @@ class EncryptedSocketTests: XCTestCase {
 
         do {
             let config = TestConfig.loadConfig()
-            let configuration = EncryptedSocket.defaultConfiguration(sslConfig: config.sslConfig, allowHostToBeSelfSigned: config.hostUsesSelfSignedCertificate)
-            let socket = try EncryptedSocket(hostname: config.hostname, port: config.port, configuration: configuration)
+            let socket = try EncryptedSocket(hostname: config.hostname, port: config.port)
             let settings = ConnectionSettings(username: config.username, password: config.password, userAgent: "BoltTests")
             self.socketTests = SocketTests(socket: socket, settings: settings)
 
