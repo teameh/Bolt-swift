@@ -13,6 +13,23 @@ public struct Request {
         case run = 0x10
         case discard_all = 0x2f
         case pull_all = 0x3f
+
+        func toString() -> String {
+            switch(self) {
+            case .initialize:
+                return "initialize"
+            case .ack_failure:
+                return "ack_failure"
+            case .reset:
+                return "reset"
+            case .run:
+                return "run"
+            case .discard_all:
+                return "discard_all"
+            case .pull_all:
+                return "pull_all"
+            }
+        }
     }
 
     enum RequestErrors: Error {
