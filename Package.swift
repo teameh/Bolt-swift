@@ -1,4 +1,4 @@
-// swift-tools-version:4.0
+// swift-tools-version:5.0
 
 import PackageDescription
 
@@ -13,7 +13,7 @@ let package = Package(
 		.library(name: "Bolt", targets: ["Bolt"]),
 	],
 	dependencies: [
-	    .package(url: "https://github.com/Neo4j-Swift/PackStream-swift.git", from: "1.0.2"),
+	    .package(url: "https://github.com/Neo4j-Swift/PackStream-swift.git", from: "1.1.0"),
 		.package(url: "https://github.com/apple/swift-nio.git", from: "1.8.0"),
 		.package(url: "https://github.com/apple/swift-nio-ssl", from: "1.2.0")
 	    ],

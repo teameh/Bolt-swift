@@ -23,7 +23,6 @@ public class UnencryptedSocket {
     
     func setupBootstrap(_ group: MultiThreadedEventLoopGroup, _ dataHandler: ReadDataHandler) -> (ClientBootstrap) {
         return ClientBootstrap(group: group)
-            // Enable SO_REUSEADDR.
             .channelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
             .channelInitializer { channel in
                 channel.pipeline.add(handler: dataHandler)
@@ -33,7 +32,7 @@ public class UnencryptedSocket {
     public func connect(timeout: Int) throws {
         
         let dataHandler = ReadDataHandler()
-        let leave = debounce(interval: 20, queue: DispatchQueue.global(qos: .background)) { [weak self] (identifier: String) in
+        let leave = { [weak self] (identifier: String) in
             self?.readGroup?.leave()
         }
         
@@ -45,8 +44,19 @@ public class UnencryptedSocket {
             } else {
                 
                 let start = data.readableBytes - 2
-                if  let terminator = data.getBytes(at: start, length: 2) {
+                if let terminator = data.getBytes(at: start, length: 2) {
                     if terminator[0] == 0 && terminator[1] == 0 {
+                        
+                        for chunk in self.receivedBuffers {
+                            if let bytes = chunk.getBytes(at: 0, length: chunk.readableBytes) {
+                                let unpacked = try? Response.unpack(bytes)
+                                print("Time for a breakpoint")
+                            }
+
+                        }
+                        
+                        
+                        
                         leave("leave")
                     } else {
                         // more data will follow
@@ -95,7 +105,7 @@ extension UnencryptedSocket: SocketProtocol {
         self.channel?.read()
         self.readGroup?.wait()
         self.readGroup = nil
-        //sleep(5)
+        usleep(500000)
         
         let receivedBuffers = self.receivedBuffers
         self.receivedBuffers = []
