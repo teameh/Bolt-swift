@@ -72,7 +72,7 @@ public class Connection: NSObject {
         case requestError
     }
 
-    enum CommandResponse: Byte {
+    public enum CommandResponse: Byte {
         case success = 0x70
         case record = 0x71
         case ignored = 0x7e
@@ -162,6 +162,12 @@ public class Connection: NSObject {
             }
 
             success = success && response.category != .failure
+        }
+
+        // Get more if not ending in a summary
+        if success == true && responses.count > 1 && responses.last!.category == .record {
+            _ = try socket.receive(expectedNumberOfBytes: maxChunkSize)
+            return
         }
 
         try completionHandler(success, responses)

@@ -12,11 +12,14 @@ public class UnencryptedSocket {
     var channel: Channel?
     
     var readGroup: DispatchGroup?
-    var receivedBuffers: [ByteBuffer] = []
+    var receivedData: [UInt8] = []
+//    var receivedBuffers: [ByteBuffer] = []
+//    var receivedBuffersQueue: DispatchQueue
     
     fileprivate static let readBufferSize = 8192
     
     public init(hostname: String, port: Int) throws {
+        // self.receivedBuffersQueue = /* OperationQueue.current?.underlyingQueue ??*/ DispatchQueue.global(qos: .background)
         self.hostname = hostname
         self.port = port
     }
@@ -37,34 +40,8 @@ public class UnencryptedSocket {
         }
         
         dataHandler.dataReceivedBlock = { data in
-            self.receivedBuffers.append(data)
-            
-            if data.readableBytes < UnencryptedSocket.readBufferSize/2 {
-                leave("leave")
-            } else {
-                
-                let start = data.readableBytes - 2
-                if let terminator = data.getBytes(at: start, length: 2) {
-                    if terminator[0] == 0 && terminator[1] == 0 {
-                        
-                        for chunk in self.receivedBuffers {
-                            if let bytes = chunk.getBytes(at: 0, length: chunk.readableBytes) {
-                                let unpacked = try? Response.unpack(bytes)
-                                print("Time for a breakpoint")
-                            }
-
-                        }
-                        
-                        
-                        
-                        leave("leave")
-                    } else {
-                        // more data will follow
-                    }
-                } else {
-                    leave("leave")
-                }
-            }
+            self.receivedData = data
+            leave("leave")
         }
         
         let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
@@ -105,22 +82,9 @@ extension UnencryptedSocket: SocketProtocol {
         self.channel?.read()
         self.readGroup?.wait()
         self.readGroup = nil
-        usleep(500000)
         
-        let receivedBuffers = self.receivedBuffers
-        self.receivedBuffers = []
-        let bytes = receivedBuffers.map { buf -> [UInt8] in
-            let empty: [UInt8] = []
-            var buf = buf
-            let num = buf.readableBytes
-            let bytes: [UInt8]? = buf.readBytes(length: num)
-            if let bytes = bytes {
-                return bytes as [UInt8]
-            } else {
-                return empty as [UInt8]
-            }
-        }
-        
-        return Array<UInt8>(bytes.joined())
+        let outData = self.receivedData
+        self.receivedData = []
+        return outData
     }
 }

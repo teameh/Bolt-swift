@@ -53,7 +53,7 @@ class BoltTests: XCTestCase {
             }
         }
         
-        self.waitForExpectations(timeout: 300000) { (_) in
+        self.waitForExpectations(timeout: 50) { (_) in
             print("Done")
         }
         
@@ -112,13 +112,11 @@ class BoltTests: XCTestCase {
         let pullAllExp = expectation(description: "Perform pull All")
 
         let request = Request.pullAll()
-        print("pull all")
         try conn.request(request) { (success, responses) in
-            print("got result \(success)")
             if responses.count > num && success == true {
                 pullAllExp.fulfill()
             } else {
-                XCTFail("Did not find sufficient amount of results")
+                XCTFail("Did not find sufficient amount of results. Found \(responses.count) instead of \(num)")
                 pullAllExp.fulfill()
             }
         }
