@@ -2,7 +2,7 @@ Pod::Spec.new do |s|
 
   s.name         = "BoltProtocol"
   s.module_name  = 'Bolt'
-  s.version      = "1.1.0"
+  s.version      = "1.1.0b1"
   s.summary      = "Bolt protocol implementation in Swift"
 
   s.description  = <<-DESC
@@ -22,9 +22,10 @@ DESC
   s.osx.deployment_target = "10.11"
   s.tvos.deployment_target = "10.0"
 
-  s.source       = { :git => "https://github.com/Neo4j-Swift/bolt-swift.git", :tag => "#{s.version}" }
+  s.source       = { :git => "https://github.com/Neo4j-Swift/bolt-swift.git", :branch => "develop/swift-nio", :tag => "#{s.version}" }
   s.source_files  = "Sources"
 
   s.dependency 'PackStream', '~> 1.1.0'
   s.dependency 'SwiftNIO'
+  s.swift_version = '5.0'
 end
