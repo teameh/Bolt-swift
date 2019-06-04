@@ -1,6 +1,7 @@
 import Foundation
 import PackStream
 import NIO
+import NIOTransportServices
 
 public class UnencryptedSocket {
     
@@ -8,28 +9,27 @@ public class UnencryptedSocket {
     let port: Int
     
     var group: EventLoopGroup?
-    var bootstrap: ClientBootstrap?
+    var bootstrap: NIOTSConnectionBootstrap?
     var channel: Channel?
     
     var readGroup: DispatchGroup?
     var receivedData: [UInt8] = []
-//    var receivedBuffers: [ByteBuffer] = []
-//    var receivedBuffersQueue: DispatchQueue
     
     fileprivate static let readBufferSize = 8192
     
     public init(hostname: String, port: Int) throws {
-        // self.receivedBuffersQueue = /* OperationQueue.current?.underlyingQueue ??*/ DispatchQueue.global(qos: .background)
         self.hostname = hostname
         self.port = port
     }
     
-    func setupBootstrap(_ group: MultiThreadedEventLoopGroup, _ dataHandler: ReadDataHandler) -> (ClientBootstrap) {
-        return ClientBootstrap(group: group)
-            .channelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
+    func setupBootstrap(_ group: MultiThreadedEventLoopGroup, _ dataHandler: ReadDataHandler) -> (NIOTSConnectionBootstrap) {
+        
+        let overrideGroup = NIOTSEventLoopGroup(loopCount: 1, defaultQoS: .utility)
+        
+        return NIOTSConnectionBootstrap(group: overrideGroup)
             .channelInitializer { channel in
-                channel.pipeline.add(handler: dataHandler)
-        }
+                channel.pipeline.addHandlers([dataHandler], position: .last)
+            }
     }
     
     public func connect(timeout: Int) throws {
@@ -66,7 +66,7 @@ extension UnencryptedSocket: SocketProtocol {
         guard let channel = channel else { return }
         
         var buffer = channel.allocator.buffer(capacity: bytes.count)
-        buffer.write(bytes: bytes)
+        buffer.writeBytes(bytes)
         _ = channel.writeAndFlush(buffer)
     }
     
@@ -80,7 +80,8 @@ extension UnencryptedSocket: SocketProtocol {
         self.readGroup?.enter()
         
         self.channel?.read()
-        self.readGroup?.wait()
+        
+        //self.readGroup?.wait()
         self.readGroup = nil
         
         let outData = self.receivedData

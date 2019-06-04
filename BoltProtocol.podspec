@@ -19,13 +19,15 @@ DESC
   s.license      = { :type => "BSD", :file => "LICENSE" }
 
   s.ios.deployment_target = "12.2"
-  s.osx.deployment_target = "10.11"
+  s.osx.deployment_target = "10.14"
   s.tvos.deployment_target = "10.0"
 
   s.source       = { :git => "https://github.com/Neo4j-Swift/bolt-swift.git", :branch => "develop/swift-nio", :tag => "#{s.version}" }
   s.source_files  = "Sources"
 
-  s.dependency 'PackStream', '~> 1.1.0'
-  s.dependency 'SwiftNIO'
+  s.dependency 'PackStream', '~> 1.1.1'
+  s.dependency 'SwiftNIO', '~> 2.0'
+  s.dependency 'SwiftNIOTransportServices', '~> 1.0'
+  # s.dependency 'SwiftNIOExtras', '~> 1.0'
   s.swift_version = '5.0'
 end

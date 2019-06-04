@@ -22,7 +22,7 @@ public class Connection: NSObject {
     }
 
     public func connect(completion: (_ success: Bool) throws -> Void) throws {
-        try socket.connect(timeout: 5000) // in ms
+        try socket.connect(timeout: 2500) // in ms
         try initBolt()
         try initialize()
         try completion(true)

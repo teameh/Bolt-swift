@@ -54,7 +54,15 @@ class EncryptedSocketTests: XCTestCase {
 
     func testUnwind() throws {
         XCTAssertNotNil(socketTests)
-        try socketTests?.templateUnwind()
+
+        let exp = expectation(description: "\(#function)\(#line)")
+        
+        DispatchQueue.global(qos: .background).async {
+            try! self.socketTests?.templateUnwind()
+            exp.fulfill()
+        }
+        
+        waitForExpectations(timeout: 40, handler: nil)
     }
 
     func testUnwindWithToNodes() throws {
