@@ -2,26 +2,6 @@ import Foundation
 import NIO
 import PackStream
 
-class ChatHandler: ChannelInboundHandler {
-    public typealias InboundIn = ByteBuffer
-    public typealias OutboundOut = ByteBuffer
-    
-    public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
-        var buffer = self.unwrapInboundIn(data)
-        while let byte: UInt8 = buffer.readInteger() {
-            print(byte)
-        }
-    }
-    
-    public func errorCaught(context: ChannelHandlerContext, error: Error) {
-        print("error: ", error)
-        
-        // As we are not really interested getting notified on success or failure we just pass nil as promise to
-        // reduce allocations.
-        context.close(promise: nil)
-    }
-}
-
 class ReadDataHandler: ChannelInboundHandler {
     public typealias InboundIn = ByteBuffer
     public typealias OutboundOut = ByteBuffer
