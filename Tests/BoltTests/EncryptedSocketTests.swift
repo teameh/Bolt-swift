@@ -62,7 +62,7 @@ class EncryptedSocketTests: XCTestCase {
             exp.fulfill()
         }
         
-        waitForExpectations(timeout: 40, handler: nil)
+        waitForExpectations(timeout: 10, handler: nil)
     }
 
     func testUnwindWithToNodes() throws {

@@ -2,30 +2,46 @@ import Foundation
 import NIO
 import PackStream
 
-class ReadDataHandler: ChannelInboundHandler {
-    typealias InboundIn = ByteBuffer
-    typealias OutboundOut = ByteBuffer
+class ChatHandler: ChannelInboundHandler {
+    public typealias InboundIn = ByteBuffer
+    public typealias OutboundOut = ByteBuffer
     
+    public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
+        var buffer = self.unwrapInboundIn(data)
+        while let byte: UInt8 = buffer.readInteger() {
+            print(byte)
+        }
+    }
+    
+    public func errorCaught(context: ChannelHandlerContext, error: Error) {
+        print("error: ", error)
+        
+        // As we are not really interested getting notified on success or failure we just pass nil as promise to
+        // reduce allocations.
+        context.close(promise: nil)
+    }
+}
+
+class ReadDataHandler: ChannelInboundHandler {
+    public typealias InboundIn = ByteBuffer
+    public typealias OutboundOut = ByteBuffer
+
     var dataBuffer: [UInt8] = []
     
     var dataReceivedBlock: (([UInt8]) -> ())?
     
-    func channelActive(ctx: ChannelHandlerContext) {
-        ctx.fireChannelActive()
-    }
-    
-    func channelRead(ctx: ChannelHandlerContext, data: NIOAny) {
-        
+    public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
+        var buffer = self.unwrapInboundIn(data)
+
         defer {
-            ctx.fireChannelRead(data)
+            context.fireChannelRead(data)
         }
         
-        let buffer = unwrapInboundIn(data)
         let readableBytes = buffer.readableBytes
         
         if readableBytes == 0 {
             print("nothing left to read, close the channel")
-            ctx.close(promise: nil)
+            context.close(promise: nil)
             return
         }
 
@@ -53,10 +69,18 @@ class ReadDataHandler: ChannelInboundHandler {
         self.dataBuffer = []
         dataReceivedBlock?(receivedBuffer)
     }
+        
+        public func errorCaught(context: ChannelHandlerContext, error: Error) {
+            print("error: ", error)
+            
+            // As we are not really interested getting notified on success or failure we just pass nil as promise to
+            // reduce allocations.
+            context.close(promise: nil)
+        }
     
-    func errorCaught(ctx: ChannelHandlerContext, error: Error) {
+    public func _errorCaught(context: ChannelHandlerContext, error: Error) {
         print("error: \(error.localizedDescription)")
-        ctx.close(promise: nil)
+        context.close(promise: nil)
     }
     
     func messageIsTerminated(_ bytes: [UInt8]) -> Bool {

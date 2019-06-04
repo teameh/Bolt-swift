@@ -67,7 +67,7 @@ extension UnencryptedSocket: SocketProtocol {
         
         var buffer = channel.allocator.buffer(capacity: bytes.count)
         buffer.writeBytes(bytes)
-        _ = channel.writeAndFlush(buffer)
+        try _ = channel.writeAndFlush(buffer).wait()
     }
     
     public func receive(expectedNumberOfBytes: Int32) throws -> [Byte] {
@@ -81,7 +81,7 @@ extension UnencryptedSocket: SocketProtocol {
         
         self.channel?.read()
         
-        //self.readGroup?.wait()
+        self.readGroup?.wait()
         self.readGroup = nil
         
         let outData = self.receivedData

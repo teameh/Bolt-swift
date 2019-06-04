@@ -14,10 +14,14 @@ public class EncryptedSocket: UnencryptedSocket {
     
     override func setupBootstrap(_ group: MultiThreadedEventLoopGroup, _ dataHandler: ReadDataHandler) -> (NIOTSConnectionBootstrap) {
         
-        let overrideGroup = NIOTSEventLoopGroup(loopCount: 1, defaultQoS: .utility)
+        // let group = NIOTSEventLoopGroup(loopCount: 1, defaultQoS: .utility)
+        let group = NIOTSEventLoopGroup()
         
-        return NIOTSConnectionBootstrap(group: overrideGroup)
+        return NIOTSConnectionBootstrap(group: group)
+            .channelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
             .channelInitializer { channel in
+                //return channel.pipeline.addHandler(ChatHandler())
+                //return channel.pipeline.addHandler(ReadDataHandler())
                 return channel.pipeline.addHandler(dataHandler)
             }
             .tlsConfigOneTrustedCert()

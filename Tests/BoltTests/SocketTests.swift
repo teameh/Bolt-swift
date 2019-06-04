@@ -170,7 +170,7 @@ extension SocketTests {
     }
 
     func templateUnwind() throws {
-        let stmt = "UNWIND RANGE(1, 10) AS n RETURN n"
+        let stmt = "UNWIND RANGE(1, 10000) AS n RETURN n"
 
         try performAsLoggedIn { (conn, dispatchGroup) in
 
@@ -191,7 +191,7 @@ extension SocketTests {
                     XCTAssertTrue(success)
 
                     let records = responses.filter { $0.category == .record }
-                    XCTAssertEqual(10, records.count)
+                    XCTAssertEqual(10000, records.count)
                 }
 
             }
