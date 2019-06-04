@@ -34,6 +34,16 @@ class BoltTests: XCTestCase {
 
     }
     
+    func testMeasureUnwind() {
+        measure {
+            do {
+                try testUnwind()
+            } catch {
+                XCTFail("Test failed")
+            }
+        }
+    }
+    
     func testUnwind() throws {
         let config = TestConfig.loadConfig()
         
@@ -53,7 +63,7 @@ class BoltTests: XCTestCase {
             }
         }
         
-        self.waitForExpectations(timeout: 50) { (_) in
+        self.waitForExpectations(timeout: 10) { (_) in
             print("Done")
         }
         

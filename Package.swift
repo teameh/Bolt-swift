@@ -13,11 +13,11 @@ let package = Package(
 		.library(name: "Bolt", targets: ["Bolt"]),
 	],
 	dependencies: [
-	    .package(url: "https://github.com/Neo4j-Swift/PackStream-swift.git", from: "1.1.1"),
-		.package(url: "https://github.com/apple/swift-nio.git", from: "2.0.1"),
-		.package(url: "https://github.com/apple/swift-nio-ssl.git", from: "2.0.2"),
-		.package(url: "https://github.com/apple/swift-nio-transport-services.git", from: "1.0.0"),
-		.package(url: "https://github.com/apple/swift-nio-extras.git", from: "1.1.0")
-	    ],
+	    .package(url: "https://github.com/Neo4j-Swift/PackStream-swift.git", from: "1.1.2"),
+	    .package(url: "https://github.com/apple/swift-nio.git", from: "2.0.1"),
+	    .package(url: "https://github.com/apple/swift-nio-ssl.git", from: "2.0.2"),
+	    .package(url: "https://github.com/apple/swift-nio-transport-services.git", from: "1.0.0"),
+	    .package(url: "https://github.com/apple/swift-nio-extras.git", from: "1.1.0")
+	],
 	targets: targets
 )
