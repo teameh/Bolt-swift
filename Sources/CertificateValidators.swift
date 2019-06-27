@@ -8,17 +8,17 @@ public class UnsecureCertificateValidator: CertificateValidatorProtocol {
         self.trustedCertificates = []
     }
     
-    let hostname: String
+    public let hostname: String
     
-    let port: UInt
+    public let port: UInt
     
-    let trustedCertificates: [SecCertificate]
+    public let trustedCertificates: [SecCertificate]
     
-    func shouldTrustCertificate(withSHA1: String) -> Bool {
+    public func shouldTrustCertificate(withSHA1: String) -> Bool {
         return true
     }
     
-    func didTrustCertificate(withSHA1: String) {
+    public func didTrustCertificate(withSHA1: String) {
     }
     
     
@@ -32,17 +32,17 @@ public class TrustRootOnlyCertificateValidator: CertificateValidatorProtocol {
         self.trustedCertificates = []
     }
 
-    let hostname: String
+    public let hostname: String
     
-    let port: UInt
+    public let port: UInt
     
-    let trustedCertificates: [SecCertificate]
+    public let trustedCertificates: [SecCertificate]
     
-    func shouldTrustCertificate(withSHA1: String) -> Bool {
+    public func shouldTrustCertificate(withSHA1: String) -> Bool {
         return false
     }
     
-    func didTrustCertificate(withSHA1: String) {
+    public func didTrustCertificate(withSHA1: String) {
     }
     
     
@@ -76,17 +76,17 @@ public class TrustSpecificOrRootCertificateValidator: CertificateValidatorProtoc
         }
     }
 
-    let hostname: String
+    public let hostname: String
     
-    let port: UInt
+    public let port: UInt
     
-    let trustedCertificates: [SecCertificate]
+    public let trustedCertificates: [SecCertificate]
     
-    func shouldTrustCertificate(withSHA1: String) -> Bool {
+    public func shouldTrustCertificate(withSHA1: String) -> Bool {
         return false
     }
     
-    func didTrustCertificate(withSHA1: String) {
+    public func didTrustCertificate(withSHA1: String) {
     }
 }
 
@@ -101,17 +101,17 @@ public class StoreCertSignaturesInFileCertificateValidator: CertificateValidator
 
     lazy var fileManager = FileManager.default
     
-    let hostname: String
+    public let hostname: String
     
-    let port: UInt
+    public let port: UInt
     
-    let trustedCertificates: [SecCertificate]
+    public let trustedCertificates: [SecCertificate]
     
-    let filePath: String
+    public let filePath: String
     
 
     
-    func shouldTrustCertificate(withSHA1 testSHA1: String) -> Bool {
+    public func shouldTrustCertificate(withSHA1 testSHA1: String) -> Bool {
         
         let keysForHosts = readKeysForHosts()
         let key = "\(self.hostname):\(self.port)"
@@ -127,7 +127,7 @@ public class StoreCertSignaturesInFileCertificateValidator: CertificateValidator
     
     
     
-    func didTrustCertificate(withSHA1 testSHA1: String) {
+    public func didTrustCertificate(withSHA1 testSHA1: String) {
         
         let keysForHosts = readKeysForHosts()
         let key = "\(self.hostname):\(self.port)"

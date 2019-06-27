@@ -17,6 +17,8 @@ public class UnencryptedSocket {
     
     fileprivate static let readBufferSize = 8192
     
+    let dataHandler = ReadDataHandler()
+    
     public init(hostname: String, port: Int) throws {
         self.hostname = hostname
         self.port = port
@@ -34,22 +36,29 @@ public class UnencryptedSocket {
     
     public func connect(timeout: Int) throws {
         
-        let dataHandler = ReadDataHandler()
         let leave = { [weak self] (identifier: String) in
             self?.readGroup?.leave()
         }
         
-        dataHandler.dataReceivedBlock = { data in
+        self.dataHandler.dataReceivedBlock = { data in
             self.receivedData = data
             leave("leave")
         }
         
         let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
         self.group = group
-        let bootstrap = setupBootstrap(group, dataHandler)
+        let bootstrap = setupBootstrap(group, self.dataHandler)
         self.bootstrap = bootstrap
         let channel = try bootstrap.connect(host: hostname, port: port).wait()
         self.channel = channel
+    }
+}
+
+extension Array where Element == Byte {
+    func toString() -> String {
+        return self.reduce("", { (oldResult, i) -> String in
+            return oldResult + (oldResult == "" ? "" : " ") + String(format: "%02x", i)
+        })
     }
 }
 

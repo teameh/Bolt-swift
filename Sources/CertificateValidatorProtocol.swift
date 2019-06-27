@@ -1,6 +1,6 @@
 import Foundation
 
-protocol CertificateValidatorProtocol {
+public protocol CertificateValidatorProtocol {
     
     var hostname: String { get }
     var port: UInt { get }

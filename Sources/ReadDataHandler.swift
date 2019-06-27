@@ -27,7 +27,7 @@ class ReadDataHandler: ChannelInboundHandler {
 
         let bytes = buffer.getBytes(at: 0, length: readableBytes) ?? []
         
-        if readableBytes <= 4 { // It's just a small message, pass it along without further testing
+        if readableBytes == 4 && bytes[0] == 0 && bytes[1] == 0 { // It's just an init response
             dataReceivedBlock?(bytes)
             return
         }
@@ -105,6 +105,7 @@ class ReadDataHandler: ChannelInboundHandler {
 
     func messageEndsInSummary(_ bytes: [UInt8]) -> Bool {
         
+        // short path
         let byteCount = bytes.count
         let limiter = 400
         let slice = byteCount > limiter ? bytes[(byteCount - limiter)..<byteCount] : bytes[0..<byteCount]
@@ -119,6 +120,25 @@ class ReadDataHandler: ChannelInboundHandler {
             }
         }
         
+        // long path
+        do {
+            let chunks = try Response.unchunk(self.dataBuffer)
+            let packs = try chunks.map { (bytes) -> Response in
+                return try Response.unpack(bytes)
+            }
+            if let lastResponse = packs.last {
+                if lastResponse.category == Response.Category.success {
+                    /*print("Chunks: \(chunks.count)")
+                    print("0: \(chunks[0].count)")
+                    print("\(packs[0].category)")
+                    print("1: \(chunks[1].count)")
+                    print("\(packs[1].category)")*/
+                    return true
+                }
+            }
+        } catch {}
+
+        // no success
         return false
     }
 

@@ -19,40 +19,35 @@ extension Data {
 
 public class EncryptedSocket: UnencryptedSocket {
     
+    lazy var certificateValidator: CertificateValidatorProtocol = UnsecureCertificateValidator(hostname: self.hostname, port: UInt(self.port))
     
     override func setupBootstrap(_ group: MultiThreadedEventLoopGroup, _ dataHandler: ReadDataHandler) -> (NIOTSConnectionBootstrap) {
         
         let group = NIOTSEventLoopGroup()
         
-        let certStoreFilePath = URL(fileURLWithPath: NSTemporaryDirectory(),
-                                        isDirectory: true).appendingPathComponent("certStore").path
+        // let certStoreFilePath = URL(fileURLWithPath: NSTemporaryDirectory(),
+        //                                isDirectory: true).appendingPathComponent("certStore").path
         
         return NIOTSConnectionBootstrap(group: group)
             .channelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
             .channelInitializer { channel in
                 return channel.pipeline.addHandler(dataHandler)
             }
-            .tlsConfig(validator: StoreCertSignaturesInFileCertificateValidator(hostname: self.hostname, port: UInt(self.port), filePath: certStoreFilePath) )
+            .tlsConfig(validator: self.certificateValidator)
+            //.tlsConfig(validator: StoreCertSignaturesInFileCertificateValidator(hostname: self.hostname, port: UInt(self.port), filePath: certStoreFilePath) )
     }
 }
 
 extension NIOTSConnectionBootstrap {
     
-    class func getCert() -> SecCertificate {
-        let path = "/tmp/server.der"
-        let data: Data = try! Data(contentsOf: URL(fileURLWithPath: path))
-        let cert = SecCertificateCreateWithData(nil, data as CFData)
-        return cert!
-    }
-    
-    
     func tlsConfig(validator: CertificateValidatorProtocol) -> NIOTSConnectionBootstrap {
         let options = NWProtocolTLS.Options()
         let verifyQueue = DispatchQueue(label: "verifyQueue")
-        let mySelfSignedCert: SecCertificate = NIOTSConnectionBootstrap.getCert()
         let verifyBlock: sec_protocol_verify_t = { (metadata, trust, verifyCompleteCB) in
             let actualTrust = sec_trust_copy_ref(trust).takeRetainedValue()
-            SecTrustSetAnchorCertificates(actualTrust, [mySelfSignedCert] as CFArray)
+            if(validator.trustedCertificates.count > 0) {
+                SecTrustSetAnchorCertificates(actualTrust, validator.trustedCertificates as CFArray)
+            }
             SecTrustSetPolicies(actualTrust, SecPolicyCreateSSL(true, nil))
             
             // only available starting with macOS 10.15 & iOS 13
