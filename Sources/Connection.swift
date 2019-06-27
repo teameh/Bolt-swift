@@ -107,7 +107,7 @@ public class Connection: NSObject {
                     case "fields":
                         break
                     default:
-                        print("Couldn't parse metadata \(key)")
+                        print("Couldn't parse metadata \(key): \(value)")
                     }
                 }
             }

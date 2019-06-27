@@ -20,7 +20,7 @@ class ReadDataHandler: ChannelInboundHandler {
         let readableBytes = buffer.readableBytes
         
         if readableBytes == 0 {
-            print("nothing left to read, close the channel")
+            // print("nothing left to read, close the channel")
             context.close(promise: nil)
             return
         }

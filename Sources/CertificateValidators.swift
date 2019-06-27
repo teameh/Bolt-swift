@@ -1,10 +1,14 @@
 import Foundation
+#if os(Linux)
+import NIOSSL
+#endif
 
 public class UnsecureCertificateValidator: CertificateValidatorProtocol {
     
     public init(hostname: String, port: UInt) {
         self.hostname = hostname
         self.port = port
+        
         self.trustedCertificates = []
     }
     
@@ -12,7 +16,11 @@ public class UnsecureCertificateValidator: CertificateValidatorProtocol {
     
     public let port: UInt
     
+    #if os(Linux)
+    public let trustedCertificates: [NIOSSLCertificateSource]
+    #else
     public let trustedCertificates: [SecCertificate]
+    #endif
     
     public func shouldTrustCertificate(withSHA1: String) -> Bool {
         return true
@@ -23,6 +31,9 @@ public class UnsecureCertificateValidator: CertificateValidatorProtocol {
     
     
 }
+
+#if os(Linux)
+#else
 
 public class TrustRootOnlyCertificateValidator: CertificateValidatorProtocol {
 
@@ -179,3 +190,4 @@ public class StoreCertSignaturesInFileCertificateValidator: CertificateValidator
     }
     
 }
+#endif

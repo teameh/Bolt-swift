@@ -133,10 +133,12 @@ extension SocketTests {
     func performAsLoggedIn(block: @escaping (Connection, DispatchGroup) throws -> ()) throws {
 
         let conn = Connection(socket: socket, settings: settings)
+        print("Got connection, connecting")
 
         let dispatchGroup = DispatchGroup()
         dispatchGroup.enter()
         try conn.connect { success in
+            print("Connected")
             defer {
                 dispatchGroup.leave()
             }
@@ -151,8 +153,10 @@ extension SocketTests {
 
     func templateRubbishCypher() throws {
         let stmt = "42"
+        print("Start test")
 
         try performAsLoggedIn { (conn, dispatchGroup) in
+            print("I'm logged in")
 
             let request = Request.run(statement: stmt, parameters: Map(dictionary: [:]))
             dispatchGroup.enter()

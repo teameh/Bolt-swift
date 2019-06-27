@@ -3,13 +3,23 @@ import PackStream
 import NIO
 import NIOTransportServices
 
+internal protocol Bootstrap {
+    func connect(host: String, port: Int) -> EventLoopFuture<Channel>
+}
+
+#if os(Linux)
+extension ClientBootstrap: Bootstrap {}
+#else
+extension NIOTSConnectionBootstrap: Bootstrap {}
+#endif
+
 public class UnencryptedSocket {
     
     let hostname: String
     let port: Int
     
     var group: EventLoopGroup?
-    var bootstrap: NIOTSConnectionBootstrap?
+    var bootstrap: Bootstrap?
     var channel: Channel?
     
     var readGroup: DispatchGroup?
@@ -24,15 +34,34 @@ public class UnencryptedSocket {
         self.port = port
     }
     
-    func setupBootstrap(_ group: MultiThreadedEventLoopGroup, _ dataHandler: ReadDataHandler) -> (NIOTSConnectionBootstrap) {
+    #if os(Linux)
+
+    // Linux version
+    func setupBootstrap(_ group: MultiThreadedEventLoopGroup, _ dataHandler: ReadDataHandler) -> (Bootstrap) {
+        
+        let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
+        
+        return ClientBootstrap(group: group)
+            .channelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
+            .channelInitializer { channel in
+                return channel.pipeline.addHandler(dataHandler)
+            }
+    }
+    
+    #else
+    
+    // Apple version
+    func setupBootstrap(_ group: MultiThreadedEventLoopGroup, _ dataHandler: ReadDataHandler) -> (Bootstrap) {
         
         let overrideGroup = NIOTSEventLoopGroup(loopCount: 1, defaultQoS: .utility)
         
         return NIOTSConnectionBootstrap(group: overrideGroup)
             .channelInitializer { channel in
                 channel.pipeline.addHandlers([dataHandler], position: .last)
-            }
+        }
     }
+    
+    #endif
     
     public func connect(timeout: Int) throws {
         
@@ -47,7 +76,13 @@ public class UnencryptedSocket {
         
         let group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
         self.group = group
-        let bootstrap = setupBootstrap(group, self.dataHandler)
+
+        #if os(Linux)
+        let bootstrap = setupBootstrap(group, self.dataHandler) as! ClientBootstrap
+        #else
+        let bootstrap = setupBootstrap(group, self.dataHandler) as! NIOTSConnectionBootstrap
+        #endif
+        
         self.bootstrap = bootstrap
         let channel = try bootstrap.connect(host: hostname, port: port).wait()
         self.channel = channel
@@ -57,7 +92,7 @@ public class UnencryptedSocket {
 extension Array where Element == Byte {
     func toString() -> String {
         return self.reduce("", { (oldResult, i) -> String in
-            return oldResult + (oldResult == "" ? "" : " ") + String(format: "%02x", i)
+            return oldResult + (oldResult == "" ? "" : ":") + String(format: "%02x", i)
         })
     }
 }

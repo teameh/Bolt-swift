@@ -73,14 +73,14 @@ class BoltTests: XCTestCase {
         
         let cypherExp = expectation(description: "Perform cypher query")
 
-        let statement = "UNWIND range(1, 1000000) AS n RETURN n"
+        let statement = "UNWIND range(1, 10000) AS n RETURN n"
         
         let request = Request.run(statement: statement, parameters: Map(dictionary: [:]))
         try conn.request(request) { (success, _) in
             do {
                 if success {
                     cypherExp.fulfill()
-                    _ = try self.pullResultsExpectingAtLeastNumberOfResults(num: 1000000 - 1, connection: conn)
+                    _ = try self.pullResultsExpectingAtLeastNumberOfResults(num: 10000 - 1, connection: conn)
                     
                 }
             } catch(let error) {
