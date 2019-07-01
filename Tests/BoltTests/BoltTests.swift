@@ -21,7 +21,7 @@ class BoltTests: XCTestCase {
             do {
                 if success == true {
                     connectionExp.fulfill()
-                    let _ = try self.createNode(connection: conn)
+                    _ = try self.createNode(connection: conn)
                 }
             } catch(let error) {
                 XCTFail("Did not expect any errors, but got \(error)")
@@ -33,7 +33,7 @@ class BoltTests: XCTestCase {
         }
 
     }
-    
+
     func testMeasureUnwind() {
         measure {
             do {
@@ -43,12 +43,12 @@ class BoltTests: XCTestCase {
             }
         }
     }
-    
+
     func testUnwind() throws {
         let config = TestConfig.loadConfig()
-        
+
         let connectionExp = expectation(description: "Login successful")
-        
+
         let settings = ConnectionSettings(username: config.username, password: config.password)
         let socket = try UnencryptedSocket(hostname: config.hostname, port: config.port)
         let conn = Connection(socket: socket, settings: settings)
@@ -56,38 +56,38 @@ class BoltTests: XCTestCase {
             do {
                 if success == true {
                     connectionExp.fulfill()
-                    let _ = try self.unwind(connection: conn)
+                    _ = try self.unwind(connection: conn)
                 }
             } catch(let error) {
                 XCTFail("Did not expect any errors, but got \(error)")
             }
         }
-        
+
         self.waitForExpectations(timeout: 10) { (_) in
             print("Done")
         }
-        
+
     }
-    
+
     func unwind(connection conn: Connection) throws -> XCTestExpectation {
-        
+
         let cypherExp = expectation(description: "Perform cypher query")
 
         let statement = "UNWIND range(1, 10000) AS n RETURN n"
-        
+
         let request = Request.run(statement: statement, parameters: Map(dictionary: [:]))
         try conn.request(request) { (success, _) in
             do {
                 if success {
                     cypherExp.fulfill()
                     _ = try self.pullResultsExpectingAtLeastNumberOfResults(num: 10000 - 1, connection: conn)
-                    
+
                 }
             } catch(let error) {
                 XCTFail("Did not expect any errors, but got \(error)")
             }
         }
-        
+
         return cypherExp
     }
 
@@ -102,7 +102,7 @@ class BoltTests: XCTestCase {
             do {
                 if success {
                     cypherExp.fulfill()
-                    let _ = try self.pullResults(connection: conn)
+                    _ = try self.pullResults(connection: conn)
                 }
             } catch(let error) {
                 XCTFail("Did not expect any errors, but got \(error)")
@@ -115,8 +115,7 @@ class BoltTests: XCTestCase {
     func pullResults(connection conn: Connection) throws -> XCTestExpectation {
         return try pullResultsExpectingAtLeastNumberOfResults(num: 0, connection: conn)
     }
-    
-    
+
     func pullResultsExpectingAtLeastNumberOfResults(num: Int, connection conn: Connection) throws -> XCTestExpectation {
 
         let pullAllExp = expectation(description: "Perform pull All")
@@ -140,7 +139,7 @@ class BoltTests: XCTestCase {
             ("testUnpackInitResponse", testUnpackInitResponse),
             ("testUnpackEmptyRequestResponse", testUnpackEmptyRequestResponse),
             ("testUnpackRequestResponseWithNode", testUnpackRequestResponseWithNode),
-            ("testUnpackPullAllRequestAfterCypherRequest", testUnpackPullAllRequestAfterCypherRequest),
+            ("testUnpackPullAllRequestAfterCypherRequest", testUnpackPullAllRequestAfterCypherRequest)
         ]
     }
 
@@ -239,7 +238,6 @@ struct Node {
     public let properties: [String: PackProtocol]
 
 }
-
 
 extension Response {
     func asNode() -> Node? {

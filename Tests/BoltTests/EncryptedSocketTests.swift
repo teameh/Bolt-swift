@@ -8,8 +8,6 @@ class EncryptedSocketTests: XCTestCase {
 
     var socketTests: SocketTests?
 
-
-
     override func setUp() {
         self.continueAfterFailure = false
         super.setUp()
@@ -31,7 +29,7 @@ class EncryptedSocketTests: XCTestCase {
             ("testMichaels100kCannotFitInATransaction", testMichaels100kCannotFitInATransaction),
             ("testRubbishCypher", testRubbishCypher),
             ("testUnwind", testUnwind),
-            ("testUnwindWithToNodes", testUnwindWithToNodes),
+            ("testUnwindWithToNodes", testUnwindWithToNodes)
         ]
     }
 
@@ -54,12 +52,12 @@ class EncryptedSocketTests: XCTestCase {
         XCTAssertNotNil(socketTests)
 
         let exp = expectation(description: "\(#function)\(#line)")
-        
+
         DispatchQueue.global(qos: .background).async {
             try! self.socketTests?.templateUnwind()
             exp.fulfill()
         }
-        
+
         waitForExpectations(timeout: 10, handler: nil)
     }
 

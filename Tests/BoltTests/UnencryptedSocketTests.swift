@@ -30,7 +30,7 @@ class UnencryptedSocketTests: XCTestCase {
             ("testMichaels100kCannotFitInATransaction", testMichaels100kCannotFitInATransaction),
             ("testRubbishCypher", testRubbishCypher),
             ("testUnwind", testUnwind),
-            ("testUnwindWithToNodes", testUnwindWithToNodes),
+            ("testUnwindWithToNodes", testUnwindWithToNodes)
         ]
     }
 

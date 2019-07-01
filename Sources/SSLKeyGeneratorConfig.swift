@@ -33,7 +33,7 @@ public struct SSLKeyGeneratorConfig {
         self.companyName = companyName
     }
 
-    public init(json: [String:Any]) {
+    public init(json: [String: Any]) {
 
         signingRequestFileName = json["signingRequestFileName"] as? String ?? "csr.csr"
         countryName = json["countryName"] as? String ?? "DK"

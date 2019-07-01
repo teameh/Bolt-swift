@@ -15,7 +15,7 @@ struct TestConfig {
         do {
             let filePathURL = URL(fileURLWithPath: pathToFile)
             let jsonData = try Data(contentsOf: filePathURL)
-            let jsonConfig = try JSONSerialization.jsonObject(with: jsonData, options: []) as? [String:Any]
+            let jsonConfig = try JSONSerialization.jsonObject(with: jsonData, options: []) as? [String: Any]
 
             self.username = jsonConfig?["username"] as? String ?? "neo4j"
             self.password = jsonConfig?["password"] as? String ?? "neo4j"
@@ -23,7 +23,7 @@ struct TestConfig {
             self.port     = jsonConfig?["port"] as? Int ?? 7687
             self.hostUsesSelfSignedCertificate = jsonConfig?["hostUsesSelfSignedCertificate"] as? Bool ?? true
             self.temporarySSLKeyPath = jsonConfig?["temporarySSLKeyPath"] as? String ?? "/tmp/boltTestKeys"
-            self.sslConfig = SSLConfiguration(json: jsonConfig?["certificateProperties"] as? [String:Any] ?? [:])
+            self.sslConfig = SSLConfiguration(json: jsonConfig?["certificateProperties"] as? [String: Any] ?? [:])
 
         } catch {
 
@@ -34,7 +34,6 @@ struct TestConfig {
             self.hostUsesSelfSignedCertificate = true
             self.temporarySSLKeyPath = "/tmp/boltTestKeys"
             self.sslConfig = SSLConfiguration(json: [:])
-
 
             print("Config load failed: \(error)\nUsing default config values")
         }

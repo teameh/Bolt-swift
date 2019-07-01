@@ -124,7 +124,7 @@ public struct Response {
     }
 
     public static func unpack(_ bytes: [Byte]) throws -> Response {
-        
+
         if bytes.count == 0 {
             throw ResponseError.tooFewBytes
         }

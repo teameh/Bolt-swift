@@ -88,10 +88,9 @@ extension SocketTests {
         let stmt2 = "create index on :User(id)"
         let stmt3 = "DROP INDEX ON :User(id)"
 
-
         try performAsLoggedIn { (conn, dispatchGroup) in
             do {
-                for statement in [ "BEGIN", stmt1, stmt2, stmt3,    "ROLLBACK" ] {
+                for statement in [ "BEGIN", stmt1, stmt2, stmt3, "ROLLBACK" ] {
 
                     if statement == "ROLLBACK" {
                         XCTFail("Should never get here")
@@ -107,7 +106,7 @@ extension SocketTests {
                         let request = Request.pullAll()
                         dispatchGroup.enter()
                         do {
-                            try conn.request(request) { (success, responses) in
+                            try conn.request(request) { (_, _) in
                                 dispatchGroup.leave()
                             }
                         } catch(let error) {
@@ -130,7 +129,7 @@ extension SocketTests {
         }
     }
 
-    func performAsLoggedIn(block: @escaping (Connection, DispatchGroup) throws -> ()) throws {
+    func performAsLoggedIn(block: @escaping (Connection, DispatchGroup) throws -> Void) throws {
 
         let conn = Connection(socket: socket, settings: settings)
         print("Got connection, connecting")
@@ -150,7 +149,6 @@ extension SocketTests {
         dispatchGroup.wait()
     }
 
-
     func templateRubbishCypher() throws {
         let stmt = "42"
         print("Start test")
@@ -161,7 +159,7 @@ extension SocketTests {
             let request = Request.run(statement: stmt, parameters: Map(dictionary: [:]))
             dispatchGroup.enter()
             do {
-                try conn.request(request) { (success, responses) in
+                try conn.request(request) { (_, _) in
 
                     XCTFail("Unexpected response")
                     dispatchGroup.leave()

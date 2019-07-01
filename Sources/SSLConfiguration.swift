@@ -26,12 +26,12 @@ public struct SSLConfiguration {
         self.generator = generator
     }
 
-    public init(json: [String:Any]) {
+    public init(json: [String: Any]) {
         temporarySSLKeyPath = json["temporarySSLKeyPath"] as? String ?? "/tmp/boltTestKeys"
         certificatePKCS12FileName = json["certificatePKCS12FileName"] as? String ?? "cert.pfx"
         certificatePKCS12Password = json["certificatePKCS12Password"] as? String ?? "1234"
         keyFileName = json["keyFileName"] as? String ?? "key.pem"
         certificatePEMFilename = json["certificatePEMFilename"] as? String ?? "cert.pem"
-        generator = SSLKeyGeneratorConfig(json: json["generator"] as? [String:Any] ?? [:])
+        generator = SSLKeyGeneratorConfig(json: json["generator"] as? [String: Any] ?? [:])
     }
 }

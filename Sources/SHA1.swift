@@ -10,7 +10,7 @@ import Foundation
 
 /// Left rotation (or cyclic shift) operator
 infix operator <<< : BitwiseShiftPrecedence
-private func <<< (lhs:UInt32, rhs:UInt32) -> UInt32 {
+private func <<< (lhs: UInt32, rhs: UInt32) -> UInt32 {
     return lhs << rhs | lhs >> (32-rhs)
 }
 
@@ -18,12 +18,12 @@ public struct SHA1 {
     // One chunk consists of 80 big-endian longwords (32 bits, unsigned)
     private static let CHUNKSIZE=80
     // SHA-1 magic words
-    private static let h0:UInt32 = 0x67452301
-    private static let h1:UInt32 = 0xEFCDAB89
-    private static let h2:UInt32 = 0x98BADCFE
-    private static let h3:UInt32 = 0x10325476
-    private static let h4:UInt32 = 0xC3D2E1F0
-    
+    private static let h0: UInt32 = 0x67452301
+    private static let h1: UInt32 = 0xEFCDAB89
+    private static let h2: UInt32 = 0x98BADCFE
+    private static let h3: UInt32 = 0x10325476
+    private static let h4: UInt32 = 0xC3D2E1F0
+
     /**************************************************
      * SHA1.context                                   *
      * The context struct contains volatile variables *
@@ -31,8 +31,8 @@ public struct SHA1 {
      **************************************************/
     private struct context {
         // Initialise variables:
-        var h:[UInt32]=[SHA1.h0,SHA1.h1,SHA1.h2,SHA1.h3,SHA1.h4]
-        
+        var h: [UInt32]=[SHA1.h0, SHA1.h1, SHA1.h2, SHA1.h3, SHA1.h4]
+
         // Process one chunk of 80 big-endian longwords
         mutating func process(chunk:inout ContiguousArray<UInt32>) {
             for i in 0..<16 {
@@ -42,12 +42,12 @@ public struct SHA1 {
             for i in 16...79 {                // Extend the chunk to 80 longwords
                 chunk[i] = (chunk[i-3] ^ chunk[i-8] ^ chunk[i-14] ^ chunk[i-16]) <<< 1
             }
-            
+
             // Initialise hash value for this chunk:
-            var a,b,c,d,e,f,k,temp:UInt32
+            var a, b, c, d, e, f, k, temp: UInt32
             a=h[0]; b=h[1]; c=h[2]; d=h[3]; e=h[4]
             f=0x0; k=0x0
-            
+
             // Main loop
             for i in 0...79 {
                 switch i {
@@ -73,7 +73,7 @@ public struct SHA1 {
                 a = temp
                 //print(String(format: "t=%d %08X %08X %08X %08X %08X", i, a, b, c, d, e))
             }
-            
+
             // Add this chunk's hash to result so far:
             h[0] = h[0] &+ a
             h[1] = h[1] &+ b
@@ -82,7 +82,7 @@ public struct SHA1 {
             h[4] = h[4] &+ e
         }
     }
-    
+
     /**************************************************
      * processData()                                  *
      * All inputs are processed as NSData.            *
@@ -95,21 +95,21 @@ public struct SHA1 {
         var w = ContiguousArray<UInt32>(repeating: 0x00000000, count: CHUNKSIZE) // Initialise empty chunk
         let ml=data.count << 3                                        // Message length in bits
         var range = 0..<64                                            // A chunk is 64 bytes
-        
+
         // If the remainder of the message is more than or equal 64 bytes
         while data.count >= range.upperBound {
             //print("Reading \(range.count) bytes @ position \(range.lowerBound)")
-            w.withUnsafeMutableBufferPointer{ dest in
+            w.withUnsafeMutableBufferPointer { dest in
                 _=data.copyBytes(to: dest, from: range)               // Retrieve one chunk
             }
             context.process(chunk: &w)                                // Process the chunk
             range = range.upperBound..<range.upperBound+64            // Make range for next chunk
         }
-        
+
         // Handle remainder of message that is <64 bytes in length
         w = ContiguousArray<UInt32>(repeating: 0x00000000, count: CHUNKSIZE) // Initialise empty chunk
         range = range.lowerBound..<data.count                         // Range for remainder of message
-        w.withUnsafeMutableBufferPointer{ dest in
+        w.withUnsafeMutableBufferPointer { dest in
             _=data.copyBytes(to: dest, from: range)                   // Retrieve remainder
         }
         let bytetochange=range.count % 4                              // The bit to the right of the
@@ -120,68 +120,68 @@ public struct SHA1 {
             context.process(chunk: &w)
             w = ContiguousArray<UInt32>(repeating: 0x00000000, count: CHUNKSIZE)
         }
-        
+
         // The last 64 bits of the last chunk must contain the message length in big-endian format
         w[15] = UInt32(ml).bigEndian
         context.process(chunk: &w)                                    // Process the last chunk
-        
+
         // The context (or nil) is returned, containing the hash in the h[] array
         return context
     }
-    
+
     /**************************************************
      * hexString()                                    *
      * Render the hash as a hexadecimal string        *
      **************************************************/
-    private static func hexString(_ context:SHA1.context?) -> String? {
+    private static func hexString(_ context: SHA1.context?) -> String? {
         guard let c=context else {return nil}
         return String(format: "%08X %08X %08X %08X %08X", c.h[0], c.h[1], c.h[2], c.h[3], c.h[4])
     }
-    
+
     /**************************************************
      * dataFromFile()                                 *
      * Fetch the contents of a file as NSData         *
      * for processing by processData()                *
      **************************************************/
-    private static func dataFromFile(named filename:String) -> SHA1.context? {
+    private static func dataFromFile(named filename: String) -> SHA1.context? {
         guard var file = try? Data(contentsOf: URL(fileURLWithPath: filename)) else {return nil}
         return process(data: &file)
     }
-    
+
     /**************************************************
      * PUBLIC METHODS                                 *
      **************************************************/
-    
+
     /// Return a hexadecimal hash from a file
-    static public func hexString(fromFile filename:String) -> String? {
+    static public func hexString(fromFile filename: String) -> String? {
         return hexString(SHA1.dataFromFile(named: filename))
     }
-    
+
     /// Return the hash of a file as an array of Ints
-    public static func hash(fromFile filename:String) -> [Int]? {
-        return dataFromFile(named: filename)?.h.map{Int($0)}
+    public static func hash(fromFile filename: String) -> [Int]? {
+        return dataFromFile(named: filename)?.h.map {Int($0)}
     }
-    
+
     /// Return a hexadecimal hash from NSData
     public static func hexString(from data: inout Data) -> String? {
         return hexString(SHA1.process(data: &data))
     }
-    
+
     /// Return the hash of NSData as an array of Ints
     public static func hash(from data: inout Data) -> [Int]? {
-        return process(data: &data)?.h.map{Int($0)}
+        return process(data: &data)?.h.map {Int($0)}
     }
-    
+
     /// Return a hexadecimal hash from a string
-    public static func hexString(from str:String) -> String? {
+    public static func hexString(from str: String) -> String? {
         guard var data = str.data(using: .utf8) else { return nil }
         return hexString(SHA1.process(data: &data))
     }
-    
+
     /// Return the hash of a string as an array of Ints
-    public static func hash(from str:String) -> [Int]? {
+    public static func hash(from str: String) -> [Int]? {
         guard var data = str.data(using: .utf8) else { return nil }
-        return process(data: &data)?.h.map{Int($0)}
+        return process(data: &data)?.h.map {Int($0)}
     }
 }
 #endif
