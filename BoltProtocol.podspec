@@ -27,7 +27,6 @@ DESC
 
   s.dependency 'PackStream', '~> 1.1.2'
   s.dependency 'SwiftNIO', '~> 2.2'
-  #s.dependency 'SwiftSSL', '~> 2.1.0'
   s.dependency 'SwiftNIOTransportServices', '~> 1.0.3'
   s.swift_version = '5.0'
 end
